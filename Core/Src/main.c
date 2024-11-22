@@ -68,11 +68,14 @@ static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 void USART3_ReceiveAndProcess(void);
 void USART3_SendData(uint8_t *data, uint16_t size);
+void run_motor_task(char *hex_string);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t countertick = 0;
+int runMotorTask = 0;
+int before;
 char m1up[] = "D5D5FF0000020200000000";                         // backrise up
 char m1dn[] = "D5D5FF0101000000000000";                         // backrise down
 char m2up[] = "D5D5FF0000040400000000";                         // kneerise up
@@ -133,7 +136,7 @@ int main(void)
   MX_ADC1_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  printf("UART3 Polling Example\n");
+  //printf("UART3 Polling Example\n");
 
   // Start UART receive interrupt
 
@@ -554,6 +557,8 @@ static void MX_GPIO_Init(void)
 void USART3_ReceiveAndProcess(void) {
 	static char previous_char = 0;
 	char received_char = 0;
+
+	// Mengatasi Overrun Error
 	if (__HAL_UART_GET_FLAG(&huart3, UART_FLAG_ORE)) {
 		__HAL_UART_CLEAR_OREFLAG(&huart3);
 	}
@@ -562,22 +567,26 @@ void USART3_ReceiveAndProcess(void) {
 		HAL_UART_Receive(&huart3, (uint8_t*)&received_char, 1, HAL_MAX_DELAY);
 		countertick++;
 
-		if (previous_char == 0x95 && received_char == 0x10) {
-			// Toggle LED for debugging
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, 1);
-			//printf("Data 0x95 diterima\n");
+		if (previous_char == 0x95 && received_char == 0x10) { 	// Jika kombinasi 0x95 diikuti oleh 0x10 diterima
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, 1);			// Toggle LED for debugging
 			countertick = 0;
-		}else{
+		}
+		else{
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, 0);
 		}
 
 		if(countertick == 16){
-			//printf("Terkirim\n");
+			run_motor_task(m1dn);
+			//run_motor_task(wSetZero);
 		}
 
 		previous_char = received_char;
 		//printf("Received: 0x%02X |", received_char);
 		//printf("countertick : %d\n", countertick);
+	}
+	// Mengatasi Overrun Error Kembali
+	if (__HAL_UART_GET_FLAG(&huart3, UART_FLAG_ORE)) {
+		__HAL_UART_CLEAR_OREFLAG(&huart3);
 	}
 }
 
@@ -609,8 +618,7 @@ void run_motor_task(char *hex_string) {
     for (size_t i = 0; i < length; i += 2) {
         uint8_t byte = (hex_char_to_byte(hex_string[i]) << 4) | hex_char_to_byte(hex_string[i + 1]); // Ambil 2 karakter hex dan konversi menjadi byte
 
-        // Kirim byte melalui USART3 menggunakan HAL
-        HAL_UART_Transmit(&huart3, &byte, 1, HAL_MAX_DELAY);
+        USART3_SendByte(byte);
     }
 
     // Tunggu sampai transmisi selesai menggunakan HAL
