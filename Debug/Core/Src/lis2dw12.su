@@ -1,0 +1,10 @@
+../Core/Src/lis2dw12.c:8:13:CS_Low	8	static
+../Core/Src/lis2dw12.c:12:13:CS_High	8	static
+../Core/Src/lis2dw12.c:16:16:SPI_Write	24	static
+../Core/Src/lis2dw12.c:26:16:SPI_Read	32	static
+../Core/Src/lis2dw12.c:37:9:LIS2DW12_Init	24	static
+../Core/Src/lis2dw12.c:64:9:LIS2DW12_SetScale	24	static
+../Core/Src/lis2dw12.c:96:9:LIS2DW12_SetODR	24	static
+../Core/Src/lis2dw12.c:113:9:LIS2DW12_ReadAccel	48	static
+../Core/Src/lis2dw12.c:138:9:LIS2DW12_ReadTemp	32	static
+../Core/Src/lis2dw12.c:155:9:LIS2DW12_ReadID	24	static
